@@ -317,7 +317,6 @@ With regard to ~lsp-lua-workspace-library~ I had the same question as [[https://
         lsp-lua-workspace-library (ht
                                    ((expand-file-name "~/.local/share/nvim/site/pack/deps/opt") t)
                                    ((concat (string-trim (shell-command-to-string "brew --prefix") ) "/Cellar/neovim/0.10.2_1/share/nvim/runtime" ) t))))
-
 #+end_src
 ** Java
 #+begin_src emacs-lisp :tangle no
