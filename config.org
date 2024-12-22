@@ -1,0 +1,658 @@
+#+title: Config
+#+author: Troy Fischer
+#+startup: fold
+
+* Useful Documentation
+** How to Rebind Keys!
++ [[https://discourse.doomemacs.org/t/how-to-re-bind-keys/56][hlissner documentation on key rebinding]]
+* Basics
+#+begin_src emacs-lisp
+(setq user-full-name "Troy Fischer"
+      user-mail-address "troytfischer@gmail.com"
+      display-line-numbers-type t
+      doom-theme 'doom-city-lights
+      password-cache-expiry nil   ;; only type password once
+      delete-by-moving-to-trash t ;; move files to trash instead of perma deletion
+      )
+
+(setq menu-bar-mode -1) ;; otherwise it comes up in terminal mode
+;; display time in modeline
+(setq display-time-format "%m-%d-%y %l:%M %p"
+      display-time-default-load-average nil)
+(display-time-mode)
+
+;; line numbers in all modes
+(global-display-line-numbers-mode)
+
+;; underline current cursor line
+(defun +troy/set-underline ()
+  (global-hl-line-mode 1)
+  (setq doom--hl-line-mode t)
+  (set-face-attribute hl-line-face nil :underline t)
+  (set-face-background 'hl-line nil)
+  (set-face-underline 'hl-line t)
+  (set-face-attribute 'hl-line nil :inherit nil))
+(defun +troy/load-theme ()
+  (interactive)
+  (call-interactively 'consult-theme)
+  (+troy/set-underline))
+(map! :leader :desc "load-theme" "h t" #'+troy/load-theme)
+(+troy/set-underline)
+(add-hook! (prog-mode text-mode conf-mode special-mode feature-mode) #'hl-line-mode)
+#+end_src
+* Fonts
++ Cascadia Code
++ Hack
++ Fira Code
++ Jetbrains Mono
++ Overpass
++ IBM Plex Mono
++ Source Code Pro
++ Monaspace Argon
++ Monaspace Krypton
++ Monaspace Neon
++ Monaspace Radon
++ Monaspace Xenon
+
+#+name: main-font
+: Monaspace Argon
+
+#+name: variable-font
+: Source Code Pro
+
+#+begin_src emacs-lisp :var main-font=main-font variable-font=variable-font :results none
+(setq +troy/mono-fonts '("Cascadia Code"
+                         "Hack"
+                         "Fira Code"
+                         "Jetbrains Mono"
+                         "IBM Plex Mono"
+                         "Monaspace Argon"
+                         "Monaspace Krypton"
+                         "Monaspace Neon"
+                         "Monaspace Radon"
+                         "Monaspace Xenon"))
+(setq +troy/variable-fonts '("Overpass" "Source Code Pro"))
+(setq +troy/font-types '("Code" "Variable"))
+
+(defun +troy/read-font (fonts)
+  (completing-read "Font: " fonts))
+(defun +troy/read-face (faces)
+  (completing-read "Font Type: " faces))
+
+(defun +troy/change-font ()
+  (interactive)
+  (let ((face (+troy/read-face +troy/font-types)))
+    (let ((font (+troy/read-font (if (string= face "Code") +troy/mono-fonts +troy/variable-fonts))))
+      (if (string= face "Code") (+troy/set-mono-font font) (+troy/set-variable-font font))
+      (message "%s font set to %s" face font)))
+  (doom/reload-font))
+
+(defun +troy/set-mono-font (f)
+  (setq doom-font (font-spec :family f :size 15)
+        doom-big-font (font-spec :family f :size 24)))
+
+(defun +troy/set-variable-font (f)
+  (setq doom-variable-pitch-font (font-spec :family f :size 15)))
+
+
+(+troy/set-mono-font main-font)
+(+troy/set-variable-font variable-font)
+
+(map! :leader :desc "change font" "h r F" #'+troy/change-font)
+#+end_src
+
+* Dashboard
+#+begin_src emacs-lisp
+(setq +doom-dashboard-banner-file (expand-file-name "default-emacs.svg" doom-private-dir))  ;; use custom image as banner
+#+end_src
+* My Functions
+** Open Pycharm from current project
+#+begin_src elisp
+(defun +troy/open-project-in-pycharm ()
+  (interactive)
+  (async-shell-command (format "open -na 'PyCharm CE.app' --args %s" (projectile-project-root)))
+  (doom/window-maximize-buffer))
+#+end_src
+** Open Neovim
+#+begin_src emacs-lisp
+(defun +troy/open-project-in-neovim ()
+  (interactive)
+  (call-process-shell-command (format "alacritty -e nvim %s" (projectile-project-root)) nil 0))
+(defun +troy/open-file-in-neovim ()
+  (interactive)
+  (call-process-shell-command (format "alacritty -e nvim %s" (buffer-file-name)) nil 0))
+#+end_src
+* Dired
+#+begin_src emacs-lisp
+(use-package! dired-x
+  :config
+  (setq dired-omit-files (concat dired-omit-files "\\|^\\..+$") ;; hides dotfiles
+        dired-omit-files (concat dired-omit-files "\\|__pycache__") ;; hides __pycache__
+        dired-deletion-confirmer #'y-or-n-p
+        dired-open-extensions '(("mkv" . "mpv")
+                                ("mp4" . "mpv"))))
+#+end_src
+* Feature Mode
+#+begin_src emacs-lisp
+(use-package! feature-mode
+  :config
+  (add-to-list 'auto-mode-alist '("\.feature$" . feature-mode)))
+#+end_src
+* Programming Language Configurations
+** Python
+*** run-python shell
+#+begin_src emacs-lisp
+(setq python-shell-completion-native-enable nil)
+#+end_src
+*** LSP
+#+begin_src emacs-lisp
+(use-package! lsp-diagnostics
+  :after flycheck
+  :config
+  (lsp-diagnostics-flycheck-enable))
+#+end_src
+**** Jedi
+#+begin_src sh :tangle no
+pip3 install -U jedi-language-server
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+(use-package! lsp-jedi
+  :ensure nil
+  :config
+  (with-eval-after-load "lsp-mode"
+    (add-to-list 'lsp-disabled-clients 'pyls)
+    (add-to-list 'lsp-enabled-clients 'jedi))
+  (add-to-list 'lsp-jedi-python-library-directories "~/.local/share/virtualenvs"))
+#+end_src
+**** Python Language Server
+[[https://github.com/python-lsp/python-lsp-server][Repository]]
+#+begin_src sh :tangle no
+pip3 install --user python-lsp-server
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+(use-package! lsp-pylsp
+  :ensure t
+  :config
+  (setq lsp-pylsp-plugins-flake8-enabled t
+        lsp-pylsp-plugins-flake8-max-line-length 100
+        lsp-pylsp-plugins-autopep8-enabled nil
+        lsp-pylsp-plugins-pylint-enabled-nil
+        lsp-pylsp-plugins-pycodestyle-enabled nil
+        lsp-pylsp-plugins-pydocstyle-enabled nil))
+#+end_src
+**** Pyright
+:PROPERTIES:
+:ID:       b1a15861-4228-4df5-9552-8f4975a59314
+:END:
+#+begin_src emacs-lisp
+(use-package! lsp-pyright
+  :hook
+  ((python-mode . (lambda ()
+                    (lsp-deferred)))
+   (flycheck-mode . (lambda ()
+                      (flycheck-add-next-checker 'lsp 'python-pyright 'python-ruff))))
+  ;;(flycheck-add-next-checker 'python-flake8 'python-pylint)
+  :config
+  (setq lsp-pyright-venv-directory "~/.local/share/virtualenvs"
+        lsp-pyright-type-checking-mode "all"
+        lsp-pyright-multi-root nil
+        lsp-pyright-langserver-command "basedpyright-langserver"))
+#+end_src
+***** LSP PYRIGHT MULTIROOT ISSUE
+When pyright has ~lsp-pyright-multi-root~ set to ~t~ it runs a single server for
+every python project it initializes in. On MacOS this has given me trouble with
+~too many open files~ issues. To prevent that I've set the variable to nil in [[file:~/.config/emacs/modules/lang/python/config.el::setq lsp-pyright-multi-root
+nil][.config/emacs/modules/lang/python/config.el]].
+
+After setting the variable delete the lsp-session file in
+[[file:~/.config/emacs/.local/cache/]] (or delete the entire directory which will have
+other repercussions like needing to re-add projects to projectile)
+***** Necessary programs
+****** Pyright
+Doom emacs will prompt to install this server automatically but if that doesn't work...
+#+begin_src sh :tangle no
+pip3 install -U pyright
+#+end_src
+****** Flycheck Checkers
+Need to install ~pylint~ and ~flake8~ for flycheck.
+#+begin_src sh :tangle no
+brew install flake8 pylint
+#+end_src
+****** Ruff code formatter
+#+begin_src emacs-lisp
+(defun +troy/python-formatter-hook ()
+  (setq apheleia-formatter 'ruff)
+  (setq flycheck-python-ruff-executable "/opt/homebrew/bin/ruff"))
+(add-hook! python-mode #'+troy/python-formatter-hook)
+#+end_src
+*** Debugging
+=debugpy= is recommended
+#+begin_src sh :tangle no
+pip3 install -U debugpy ptvsd pytest behave
+#+end_src
+
+#+begin_src emacs-lisp
+(after! dap-mode
+  (setq dap-python-executable "python3")
+  (setq dap-python-debugger 'debugpy)
+  (require 'dap-python))
+(defun refresh-breakpoints ()
+  (interactive)
+  (set-window-buffer nil (current-buffer)))
+#+end_src
+**** Key Mapping
+#+begin_src emacs-lisp
+(map! :leader
+      (:prefix-map ("d" . "debug")
+       :desc "dap-breakpoint-toggle" "t" #'dap-breakpoint-toggle
+       :desc "dap-debug" "d" #'dap-debug
+       :desc "dap-debug-recent" "r" #'dap-debug-recent
+       :desc "dap-debug-last" "l" #'dap-debug-last
+       :desc "dap-debug-edit-template" "e" #'dap-debug-edit-template
+       :desc "dap-next" "n" #'dap-next
+       :desc "refresh breakpoints" "R" #'refresh-breakpoints
+       :desc "disconnect" "q" #'dap-disconnect
+       (:prefix-map ("u" . "ui")
+        :desc "dap-ui-breakpoints-list" "l" #'dap-ui-breakpoints-list
+        :desc "dap-ui-breakpoints-delete" "d" #'dap-ui-breakpoints-delete)))
+#+end_src
+**** Issue with dap-python
+[[file:~/.config/emacs/.local/straight/repos/dap-mode/dap-python.el::let* ((python-executable (dap-python--pyenv-executable-find dap-python-executable)][Link to file on system]]
+I have been changing this line: https://github.com/emacs-lsp/dap-mode/blob/c72ac1b1a5811cfda3c6740bcf24c67222b6c840/dap-python.el#L174 to
+#+begin_src emacs-lisp :tangle no
+(let* ((python-executable (executable-find dap-python-executable))
+#+end_src
+Because in general I'm using ~pipenv~ rather than ~pyvenv~
+**** Custom Dap Template
+***** Behave
+#+begin_src emacs-lisp :tangle no
+(defun +troy/add-behave-template ()
+  (interactive)
+  (dap-register-debug-template
+   "Python :: Run behave (buffer)"
+   (list :type "python"
+         :args nil
+         :cwd (doom-project-root)
+         :program nil
+         :module "behave"
+         :request "launch"
+         :name "Python :: Run behave (buffer)")))
+#+end_src
+*** Formatting
+**** Necessary programs
+#+begin_src sh :tangle no
+brew install ruff
+#+end_src
+**** Optimize Imports
+#+begin_src emacs-lisp :tangle no
+(use-package! py-isort
+  :after python
+  :hook ((before-save . py-isort-before-save)))
+#+end_src
+***** Pip
+#+begin_src sh :tangle no
+pip3 install -U pyflakes isort
+#+end_src
+***** Homebrew
+#+begin_src sh :tangle no
+brew install isort flake8
+#+end_src
+*** Add Pip executables to path
+#+begin_src emacs-lisp
+(let ((pip-path (concat (shell-command-to-string "echo -n $(python3 -m site --user-base)") "/bin")))
+  (add-to-list 'exec-path pip-path))
+#+end_src
+** Lua
+Requires my neomvim config and using mason to install the server...
+
+
+With regard to ~lsp-lua-workspace-library~ I had the same question as [[https://github.com/emacs-lsp/lsp-mode/issues/2818][this guy]] and am equally dumbfounded.
+#+begin_src emacs-lisp
+(use-package! lsp-lua
+  :config
+  (setq lsp-clients-lua-language-server-bin (expand-file-name "~/.local/share/nvim/mason/bin/lua-language-server")
+        lsp-clients-lua-language-server-main-location (expand-file-name "~/.local/share/nvim/mason/packages/lua-language-server/libexec/main.lua")
+        lsp-lua-workspace-library (ht
+                                   ((expand-file-name "~/.local/share/nvim/site/pack/deps/opt") t)
+                                   ((concat (string-trim (shell-command-to-string "brew --prefix") ) "/Cellar/neovim/0.10.2_1/share/nvim/runtime" ) t))))
+
+#+end_src
+** Java
+#+begin_src emacs-lisp :tangle no
+(use-package! lsp-java
+  :config
+  (setq lsp-java-code-generation-hash-code-equals-use-java7objects t))
+#+end_src
+** C++
+#+begin_src emacs-lisp
+(use-package! clang-format)
+(add-hook! 'c++-mode-hook #'lsp-deferred)
+#+end_src
+* Breadcrumbs
+#+begin_src emacs-lisp
+(use-package! lsp-mode
+  :config
+  (setq lsp-headerline-breadcrumb-enable t)
+  (map! :leader :after lsp-mode "c R" #'lsp-workspace-restart))
+#+end_src
+* Org
+** Config
+#+begin_src emacs-lisp
+(use-package! org
+  :ensure nil
+  :config
+  (defvar +troy/main-org-agenda-file (expand-file-name (concat org-directory "/agenda.org")))
+  (setq org-directory "~/org/"
+        org-agenda-files (list +troy/main-org-agenda-file)
+        org-default-notes-file (concat org-directory "notes.org")
+        org-agenda-span 30
+        org-hide-emphasis-markers t)
+  (map! :map org-mode-map
+        :localleader "TAB" #'org-toggle-inline-images)
+  (add-to-list 'org-refile-targets '(org-default-notes-file :maxlevel . 3))
+  ;; disable org mode auto complete suggestions
+  (add-hook! 'org-mode-hook #'(lambda () (company-mode -1))))
+#+end_src
+** Agenda
+*** Keybinding to open agenda.org
+#+begin_src emacs-lisp
+(defun +troy/open-org-agenda ()
+  (interactive)
+  (find-file +troy/main-org-agenda-file))
+(map! :leader
+      :desc "Open agenda.org" "o a o" #'+troy/open-org-agenda)
+#+end_src
+** ob-http
+[[https://github.com/zweifisch/ob-http][Repository]]
+Package to do Postman like things in org mode.
+#+begin_src emacs-lisp
+(use-package! ob-http
+  :after org-babel
+  :ensure nil
+  :config
+  (add-to-list 'org-babel-load-languages '(http . t)))
+#+end_src
+** Latex
+See [[https://emacs.stackexchange.com/questions/79285/why-is-org-highlight-latex-and-related-messing-with-org-hyperlink-description][link]] for =org-highlight-latex-and-related= details. Without that setting the org syntax highlighting gets messed up.
+#+begin_src emacs-lisp
+(after! org
+  (use-package! ox-extra
+    :config
+    (ox-extras-activate '(latex-header-blocks ignore-headlines)))
+
+  ;; Import ox-latex to get org-latex-classes and other funcitonality
+  ;; for exporting to LaTeX from org
+  (use-package! ox-latex
+    :init
+    ;; code here will run immediately
+    :config
+    ;; code here will run after the package is loaded
+    (setq org-latex-with-hyperref nil) ;; stop org adding hypersetup{author..} to latex export
+    ;; (setq org-latex-prefer-user-labels t)
+
+    (setq org-highlight-latex-and-related '(script entities))
+    ;; deleted unwanted file extensions after latexMK
+    (setq org-latex-logfiles-extensions
+          (quote ("xdv" "lof" "lot" "tex~" "aux" "idx" "log" "out" "toc" "nav" "snm" "vrb" "dvi" "fdb_latexmk" "blg" "brf" "fls" "entoc" "ps" "spl" "bbl" "xmpi" "run.xml" "bcf" "acn" "acr" "alg" "glg" "gls" "ist")))
+
+    (unless (boundp 'org-latex-classes)
+      (setq org-latex-classes nil)))
+  )
+#+end_src
+** Babel
+#+begin_src emacs-lisp
+(defun org-babel-edit-prep:python (babel-info)
+  (setq-local buffer-file-name (->> babel-info caddr (alist-get :tangle)))
+  (lsp))
+#+end_src
+* Password Store Keybindings
+#+begin_src emacs-lisp
+(defun +troy/password-store-dir ()
+  (find-file "~/.password-store"))
+(defun +troy/git-password-store ()
+  (interactive)
+  (+troy/password-store-dir)
+  (magit))
+(use-package! password-store
+  :config
+  (map! :leader
+        (:prefix-map ("P" . "Passwords")
+         :desc "password-store-copy" "c" #'password-store-copy
+         :desc "password-store-otp-token-copy" "o" #'password-store-otp-token-copy
+         :desc "password-store-git" "g" #'+troy/git-password-store
+         :desc "password-store" "p" #'pass)))
+#+end_src
+* Projectile
+#+begin_src emacs-lisp
+(use-package! projectile
+  :ensure nil
+  :config
+  (map! :leader :desc "ripgrep" "p G" #'projectile-ripgrep)
+  (map! :leader :desc "PyCharm" "p P" #'+troy/open-project-in-pycharm)
+  (map! :leader :desc "Neovim" "p N" #'+troy/open-project-in-neovim)
+  (map! :leader :desc "Neovim" "p n" #'+troy/open-file-in-neovim)
+  (add-to-list 'projectile-globally-ignored-directories "^\\.venv$"))
+#+end_src
+* Vertico
+#+begin_src emacs-lisp
+(map! :map vertico-map "C-l" #'+vertico/enter-or-preview) ;; allow C-l to select an item
+#+end_src
+* Blog
+*NOTE* you need to copy the font awesome directory yourself. This saves a lot of time when exporting static assets.
+#+begin_src emacs-lisp
+(setq org-html-postamble-format
+      '(("en" "<p class=\"author\">Author: %a</p><p class=\"date\">Updated: %C</p>")))
+(setq org-html-postamble t)
+(setq org-html-head-include-default-style nil)
+(setq org-publish-project-alist
+      '(
+        ("blog-html"
+         :recursive t
+         :base-extension "org"
+         :base-directory "~/blog/content"
+         :publishing-directory "~/blog/public"
+         :publishing-function org-html-publish-to-html
+         :section-numbers nil
+         :org-html-link-home "/index.html"
+         :org-html-link-use-abs-url t
+         )
+        ("blog-static"
+         :recursive t
+         :base-directory "~/blog/content/"
+         :base-extension "css\\|js\\|png\\|jpg\\|jpeg\\|gif\\|pdf\\|mp3\\|ogg\\|swf\\|ico"
+         :publishing-directory "~/blog/public/"
+         :publishing-function org-publish-attachment
+         )
+        ("blog" :components ("blog-html" "blog-static"))))
+(defun +troy/publish-blog-remote ()
+  (interactive)
+  (async-shell-command "rsync -L -e ssh -uvrz ~/blog/public/ root@165.227.115.74:/var/www/html/ --delete --chmod=Du=rwx,Dgo=rx,Fu=rw,Fog=r"))
+#+end_src
+** Note on table of contents
+#+begin_quote
+Org normally inserts the table of contents directly before the first headline of the file. To move the table of contents to a different location, first turn off the default with org-export-with-toc variable or with ‘#+OPTIONS: toc:nil’. Then insert ‘#+TOC: headlines N’ at the desired location(s).
+#+end_quote
+
+[[https://orgmode.org/manual/Table-of-Contents.html][Org TOC manual]]
+* Proxies
+#+begin_src emacs-lisp :tangle no
+;; (setq url-proxy-services '(("http" . "someproxy.proxy.hostname.com:port")
+;;                            ("https" . "someproxy.proxy.hostname.com:port")))
+#+end_src
+* Auth Sources
+#+begin_src emacs-lisp
+(setq auth-sources '("~/.authinfo.gpg"))
+#+end_src
+* Forge
+** Corporate Examples
+#+begin_src emacs-lisp :tangle no
+;; (with-eval-after-load 'forge (add-to-list 'forge-alist '("github.cloud.company.com" "github.cloud.company.com/api/v3" "github.cloud.company.com" forge-github-repository)))
+;; (with-eval-after-load 'browse-at-remote (add-to-list 'browse-at-remote-remote-type-regexps `(:host ,(rx bol "github.cloud.company.com" eol) :type "github" :actual-host "github.cloud.company.com")))
+#+end_src
+* Code Review
+Config: [[https://github.com/wandersoncferreira/code-review]]
+#+begin_src emacs-lisp
+(setq code-review-auth-login-marker 'forge)
+(add-hook 'code-review-mode-hook #'emojify-mode)
+(add-hook 'code-review-mode-hook
+          (lambda ()
+            ;; include *Code-Review* buffer into current workspace
+            (persp-add-buffer (current-buffer))))
+
+(setq code-review-lgtm-message "LGTM ✔")
+#+end_src
+** Corporate Examples
+#+begin_src emacs-lisp :tangle no
+;; (setq code-review-github-host "github.cloud.company.com/api/v3"
+;;       code-review-github-base-url "github.cloud.company.com"
+;;       code-review-github-graphql-host "github.cloud.company.com/api")
+#+end_src
+* Json
+#+begin_src emacs-lisp
+(add-hook 'json-mode-hook (lambda ()
+                            (make-local-variable 'js-indent-level)
+                            (setq js-indent-level 2)))
+#+end_src
+* Bogiefile
+[[https://emacs.stackexchange.com/questions/12396/run-command-when-opening-a-file-of-a-specific-filetype][Associate Major Mode with certain files]]
+#+begin_src emacs-lisp
+(add-to-list 'auto-mode-alist '("Bogiefile" . yaml-mode))
+#+end_src
+* Jira
+[[https://github.com/ahungry/org-jira][Org Jira Docs]]
+#+begin_src emacs-lisp :tangle no
+(use-package! org-jira
+  :ensure nil
+  :defer t ;; breaking epg when not deferred
+  :config
+  (setq org-jira-done-states '("Closed" "Resolved" "Done" "Accepted"))
+  (setq org-jira-working-dir (concat org-directory "jira"))
+  (setq jiralib-url "https://company.jira.com")
+  (setq jiralib-token
+        (cons "Authorization"
+              (concat "Bearer " (auth-source-pick-first-password
+                                 :host "company.jira.com"))))
+  (setq org-jira-custom-jqls
+        '(
+          (:jql " project = Software AND Team = \"Software Devs\" AND Sprint in openSprints() AND resolution = unresolved ORDER BY Rank ASC "
+           :filename "current_sprint"))))
+#+end_src
+* Smooth Scroll
+Smooth scrolling provided in emacs 29!
+#+begin_src emacs-lisp
+(when (version<= "29" emacs-version)
+  (setq pixel-scroll-precision-mode t))
+#+end_src
+* Temporary Fix for too many open files
+[[https://www.blogbyben.com/2022/05/gotcha-emacs-on-mac-os-too-many-files.html][Link to where I found the code]]
+I was having issues with [[*Pyright][Pyright]] that was causing this issue but since fixing that this hasn't been needed. It didn't actually solve the problem either but provided a temporary fix until I could restart Emacs.
+#+begin_src emacs-lisp
+(defun file-notify-rm-all-watches ()
+  "Remove all existing file notification watches from Emacs."
+  (interactive)
+  (maphash
+   (lambda (key _value)
+     (file-notify-rm-watch key))
+   file-notify-descriptors))
+#+end_src
+* Screenshot.el
++ [[https://github.com/tecosaur/screenshot][Github]] 
++ ~x-export-frames~ is not available on macos
+#+begin_src emacs-lisp
+(when (not (eq system-type 'darwin))
+  (use-package! screenshot))
+#+end_src
+* PDFView Mode
+#+begin_src emacs-lisp
+(defun +troy/pdf-view-config ()
+  (display-line-numbers-mode -1)
+  (global-hl-line-mode -1))
+(add-hook! 'pdf-view-mode-hook #'+troy/pdf-view-config)
+#+end_src
+* Leetcode
+#+begin_src emacs-lisp
+(use-package! leetcode
+  :config
+  (setq leetcode-prefer-language "python3")
+  (setq leetcode-prefer-sql "mysql")
+  (setq leetcode-save-solutions t)
+  (setq leetcode-directory "~/leetcode")
+  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]leetcode\\'")
+  (add-hook 'leetcode-solution-mode-hook
+          (lambda() (flycheck-mode -1))))
+#+end_src
+* Yank commands
+#+begin_src emacs-lisp
+(map! :leader
+      (:prefix-map
+       ("y" . "yank")
+       :desc "org-yank-link" "o" #'link-hint-copy-link-at-point
+       :desc "magit-yank-link" "g" #'forge-copy-url-at-point-as-kill))
+#+end_src
+* abo-abo modes
+** Avy
+~avy-goto-char-timer~ is a go to movement command (no pun intended)
+#+begin_src emacs-lisp
+(use-package! avy
+  :config
+  (setq avy-all-windows t))
+#+end_src
+** Swiper
+#+begin_src emacs-lisp
+(map! "C-s" #'swiper-isearch
+      "C-S-s" #'swiper-isearch-backward)
+(map! :map ivy-minibuffer-map
+      "C-j" #'ivy-next-line
+      "C-k" #'ivy-previous-line)
+#+end_src
+** Ace Window
+#+begin_src emacs-lisp
+(when (not (bound-and-true-p evil-state))
+  (map! :leader
+        :desc "split horizontal" "w v" #'split-window-horizontally
+        :desc "split vertical" "w s" #'split-window-vertically
+        :desc "ace window" "w w" #'ace-window
+        :desc "ace window delete" "w d" #'ace-delete-window))
+(when (bound-and-true-p evil-state)
+  (use-package! ace-window
+    :config
+    (map! :leader :desc "ace window" "w C-w" #'ace-window)))
+#+end_src
+* Window Hydra
+Predefined Doom Emacs hydra, useful for resizing windows.
+#+begin_src emacs-lisp
+(map! "C-c w h" #' +hydra/window-nav/body)
+#+end_src
+* Misc Non evil bindings
+** Mark Ring
+#+begin_src emacs-lisp
+(when (not (bound-and-true-p evil-state))
+  (map! "C-c s r" #'counsel-mark-ring))
+#+end_src
+** TODO Drag Stuff
+~drag-stuff-up~ & ~drag-stuff-down~ could be useful.
+* Issues with Evil surround
+There's a problem when executing a command like ~ds(~ where it won't find the delimiters. I learned [2024-05-05 Sun 23:00] that doing ~ds)~ will work.
++ https://github.com/emacs-evil/evil-surround/issues/205
++ https://github.com/emacs-evil/evil-surround/issues/204
+
+It seems to be caused by =evil-embrace= so I can also add this to doom's =packages.el=:
+#+begin_src emacs-lisp :tangle no
+(package! evil-embrace :disable t)
+#+end_src
+* Magit
+#+begin_src emacs-lisp
+(use-package! magit
+  :ensure nil
+  :config
+  (setq magit-log-margin '(t "%Y-%m-%d %I:%M %p " magit-log-margin-width t 18)))
+#+end_src
+* Edebug
+#+begin_src emacs-lisp
+(put 'aio-defun 'edebug-form-spec
+     '(name
+       (&optional arg-list)
+       body))
+#+end_src
