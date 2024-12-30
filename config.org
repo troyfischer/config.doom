@@ -21,6 +21,9 @@
       display-time-default-load-average nil)
 (display-time-mode)
 
+;; don't yank the text I just pasted over
+(setq evil-kill-on-visual-paste nil)
+
 ;; line numbers in all modes
 (global-display-line-numbers-mode)
 

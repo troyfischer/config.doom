@@ -3,3 +3,5 @@
 *.log
 tmp/
 
+# Allow the config to tangle from config.org
+config.el
