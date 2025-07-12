@@ -95,8 +95,6 @@
 
 (package! editorconfig-emacs
   :recipe (:host github :repo "editorconfig/editorconfig-emacs"))
-(package! copilot
-  :recipe (:host github :repo "copilot-emacs/copilot.el"))
 (package! csv-mode)
 (package! graphql-mode
   :recipe (:host github :repo "davazp/graphql-mode"))
@@ -104,3 +102,9 @@
   :recipe (:host github :repo "jdormit/ob-graphql"))
 (package! ox-slack
   :recipe (:host github :repo "titaniumbones/ox-slack"))
+
+;; llm interface
+(package! gptel)
+
+;; extra themems
+(package! ef-themes)

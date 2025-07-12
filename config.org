@@ -10,7 +10,7 @@
 (setq user-full-name "Troy Fischer"
       user-mail-address "troytfischer@gmail.com"
       display-line-numbers-type t
-      doom-theme 'doom-city-lights
+      doom-theme 'doom-one
       password-cache-expiry nil   ;; only type password once
       delete-by-moving-to-trash t ;; move files to trash instead of perma deletion
       )
@@ -37,10 +37,9 @@
   (set-face-attribute 'hl-line nil :inherit nil))
 (defun +troy/load-theme ()
   (interactive)
-  (call-interactively 'consult-theme)
-  (+troy/set-underline))
+  (call-interactively 'consult-theme))
 (map! :leader :desc "load-theme" "h t" #'+troy/load-theme)
-(+troy/set-underline)
+; (+troy/set-underline)
 (add-hook! (prog-mode text-mode conf-mode special-mode feature-mode) #'hl-line-mode)
 #+end_src
 * Fonts
@@ -56,9 +55,13 @@
 + Monaspace Neon
 + Monaspace Radon
 + Monaspace Xenon
++ bedstead
++ Monofoki
++ Ubuntu Mono
+
 
 #+name: main-font
-: Monaspace Argon
+: Ubuntu Mono
 
 #+name: variable-font
 : Source Code Pro
@@ -73,7 +76,10 @@
                          "Monaspace Krypton"
                          "Monaspace Neon"
                          "Monaspace Radon"
-                         "Monaspace Xenon"))
+                         "Monaspace Xenon"
+                         "bedstead"
+                         "Monofoki"
+                         "Ubuntu Mono"))
 (setq +troy/variable-fonts '("Overpass" "Source Code Pro"))
 (setq +troy/font-types '("Code" "Variable"))
 
@@ -195,13 +201,11 @@ pip3 install --user python-lsp-server
   ((python-mode . (lambda ()
                     (lsp-deferred)))
    (flycheck-mode . (lambda ()
-                      (flycheck-add-next-checker 'lsp 'python-pyright 'python-ruff))))
+                      (flycheck-add-next-checker 'lsp 'python-pyright))))
   ;;(flycheck-add-next-checker 'python-flake8 'python-pylint)
   :config
-  (setq lsp-pyright-venv-directory "~/.local/share/virtualenvs"
-        lsp-pyright-type-checking-mode "all"
-        lsp-pyright-multi-root nil
-        lsp-pyright-langserver-command "basedpyright-langserver"))
+  (setq lsp-pyright-type-checking-mode "all"
+        lsp-pyright-multi-root nil))
 #+end_src
 ***** LSP PYRIGHT MULTIROOT ISSUE
 When pyright has ~lsp-pyright-multi-root~ set to ~t~ it runs a single server for
@@ -227,7 +231,8 @@ brew install flake8 pylint
 #+begin_src emacs-lisp
 (defun +troy/python-formatter-hook ()
   (setq apheleia-formatter 'ruff)
-  (setq flycheck-python-ruff-executable "/opt/homebrew/bin/ruff"))
+  ;(setq flycheck-python-ruff-executable "/opt/homebrew/bin/ruff")
+  )
 (add-hook! python-mode #'+troy/python-formatter-hook)
 #+end_src
 *** Debugging
@@ -393,6 +398,8 @@ See [[https://emacs.stackexchange.com/questions/79285/why-is-org-highlight-latex
     ;; code here will run after the package is loaded
     (setq org-latex-with-hyperref nil) ;; stop org adding hypersetup{author..} to latex export
     ;; (setq org-latex-prefer-user-labels t)
+    ;; (setq org-latex-compiler "pdflatex")
+    ;; (setq latex-run-command "pdflatex")
 
     (setq org-highlight-latex-and-related '(script entities))
     ;; deleted unwanted file extensions after latexMK
@@ -622,11 +629,6 @@ I was having issues with [[*Pyright][Pyright]] that was causing this issue but s
     :config
     (map! :leader :desc "ace window" "w C-w" #'ace-window)))
 #+end_src
-* Window Hydra
-Predefined Doom Emacs hydra, useful for resizing windows.
-#+begin_src emacs-lisp
-(map! "C-c w h" #' +hydra/window-nav/body)
-#+end_src
 * Misc Non evil bindings
 ** Mark Ring
 #+begin_src emacs-lisp
@@ -636,7 +638,7 @@ Predefined Doom Emacs hydra, useful for resizing windows.
 ** TODO Drag Stuff
 ~drag-stuff-up~ & ~drag-stuff-down~ could be useful.
 * Issues with Evil surround
-There's a problem when executing a command like ~ds(~ where it won't find the delimiters. I learned [2024-05-05 Sun 23:00] that doing ~ds)~ will work.
+There's a problem when executing a command like ~ds(~ where it won't find the delimiters. *NOTE* I learned [2024-05-05 Sun 23:00] that doing ~ds)~ will work.
 + https://github.com/emacs-evil/evil-surround/issues/205
 + https://github.com/emacs-evil/evil-surround/issues/204
 
@@ -651,10 +653,21 @@ It seems to be caused by =evil-embrace= so I can also add this to doom's =packag
   :config
   (setq magit-log-margin '(t "%Y-%m-%d %I:%M %p " magit-log-margin-width t 18)))
 #+end_src
-* Edebug
+* Tramp
+Default to bash with tramp. Useful when connecting to my raspberry pi.
 #+begin_src emacs-lisp
-(put 'aio-defun 'edebug-form-spec
-     '(name
-       (&optional arg-list)
-       body))
+(setq vterm-tramp-shells '(("docker" "/bin/sh") ("ssh" "/bin/bash")))
+#+end_src
+* Gptel
+#+begin_src emacs-lisp
+;; OpenRouter offers an OpenAI compatible API
+(gptel-make-openai "OpenRouter"               ;Any name you want
+  :host "openrouter.ai"
+  :endpoint "/api/v1/chat/completions"
+  :stream t
+  :key (password-store-get "OpenRouterApiKey")                   ;can be a function that returns the key
+  :models '(openai/gpt-3.5-turbo
+            openai/gpt-4.1-mini
+            google/gemini-2.5-pro-preview
+            anthropic/claude-sonnet-4))
 #+end_src

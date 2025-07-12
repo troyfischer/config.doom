@@ -5,7 +5,8 @@
  ;; If there is more than one, they won't work right.
  '(magit-todos-insert-after '(bottom) nil nil "Changed by setter of obsolete option `magit-todos-insert-at'")
  '(package-selected-packages '(clang-format))
- '(safe-local-variable-values '((lsp-clangd-compile-commands-dir . "build")))
+ '(safe-local-variable-values
+   '((org-latex-default-packages-alist) (lsp-clangd-compile-commands-dir . "build")))
  '(warning-suppress-types '((org-element-cache) (defvaralias))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
