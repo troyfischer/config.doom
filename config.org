@@ -201,12 +201,16 @@ pip3 install --user python-lsp-server
   ((python-mode . (lambda ()
                     (lsp-deferred)))
    (flycheck-mode . (lambda ()
-                      (flycheck-add-next-checker 'lsp 'python-pyright))))
+                      (flycheck-add-next-checker 'lsp
+                                                 ;; python-pyright is redundant since I use pyright as my lsp server & lsp diagnostics
+                                                 ;; 'python-pyright
+                                                 'python-mypy))))
   ;;(flycheck-add-next-checker 'python-flake8 'python-pylint)
   :config
   (setq lsp-pyright-type-checking-mode "all"
         lsp-pyright-multi-root nil))
 #+end_src
+
 ***** LSP PYRIGHT MULTIROOT ISSUE
 When pyright has ~lsp-pyright-multi-root~ set to ~t~ it runs a single server for
 every python project it initializes in. On MacOS this has given me trouble with
