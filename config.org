@@ -208,8 +208,33 @@ pip3 install --user python-lsp-server
   ;;(flycheck-add-next-checker 'python-flake8 'python-pylint)
   :config
   (setq lsp-pyright-type-checking-mode "all"
-        lsp-pyright-multi-root nil))
+        lsp-pyright-multi-root nil
+        lsp-pyright-langserver-command "basedpyright" ; trying basedpyright for a while
+        ))
 #+end_src
+
+***** Basedpyright
+Notes on ~basedpyright~ setup which may be generally applicable...
+
+As far as I can tell =lsp-pyright.el= is a little bit of a pain to get working with basedpyright. [[https://github.com/emacs-lsp/lsp-pyright/blob/73377169beff8fe22cc6d52d65099db88bf49679/lsp-pyright.el#L294-L296][:new-connection]] is defined as
+#+begin_src emacs-lisp
+:new-connection (lsp-stdio-connection (lambda ()
+                                          (cons (lsp-package-path 'pyright)
+                                                lsp-pyright-langserver-command-args)))
+#+end_src
+
+when pyright is installed via lsp, ~(lsp-package-path 'pyright)~ gives =~/.config/emacs/.local/etc/lsp/npm/pyright/bin/pyright-langserver=, and it seems to /always/ use that to start the connection no matter what the value of ~lsp-pyright-langserver-command~ is.
+
+In order to get this working I've changed the new-connection function to
+#+begin_src emacs-lisp
+:new-connection (lsp-stdio-connection (lambda ()
+                                          (cons "basedpyright"
+                                                lsp-pyright-langserver-command-args)))
+#+end_src
+
+then ~straight-rebuild-package~ for lsp-pyright and that finally works (with basedpyright available from PATH ofc)
+
+I've tracked this down multiple times now so I'm documenting for posterity.
 
 ***** LSP PYRIGHT MULTIROOT ISSUE
 When pyright has ~lsp-pyright-multi-root~ set to ~t~ it runs a single server for
