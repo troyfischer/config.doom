@@ -667,7 +667,8 @@ I was having issues with [[*Pyright][Pyright]] that was causing this issue but s
 ** TODO Drag Stuff
 ~drag-stuff-up~ & ~drag-stuff-down~ could be useful.
 * Issues with Evil surround
-There's a problem when executing a command like ~ds(~ where it won't find the delimiters. *NOTE* I learned [2024-05-05 Sun 23:00] that doing ~ds)~ will work.
+There's a problem when executing a command like ~ds(~ where it won't find the delimiters.
+
 + https://github.com/emacs-evil/evil-surround/issues/205
 + https://github.com/emacs-evil/evil-surround/issues/204
 
@@ -675,6 +676,9 @@ It seems to be caused by =evil-embrace= so I can also add this to doom's =packag
 #+begin_src emacs-lisp :tangle no
 (package! evil-embrace :disable t)
 #+end_src
+
+*I learned [2024-05-05 Sun 23:00] that doing ~ds)~ will work.*
+
 * Magit
 #+begin_src emacs-lisp
 (use-package! magit
@@ -689,14 +693,54 @@ Default to bash with tramp. Useful when connecting to my raspberry pi.
 #+end_src
 * Gptel
 #+begin_src emacs-lisp
-;; OpenRouter offers an OpenAI compatible API
-(setq gptel-backend
- (gptel-make-openai "OpenRouter"
-  :host "openrouter.ai"
-  :endpoint "/api/v1/chat/completions"
-  :stream t
-  :key (lambda () (password-store-get "OpenRouterApiKey"))
-  :models '(openai/gpt-5
-            google/gemini-2.5-pro-preview
-            anthropic/claude-sonnet-4)))
+(use-package! gptel
+  :config
+  ;; OpenRouter offers an OpenAI compatible API
+  (setq gptel-backend
+        (gptel-make-openai "OpenRouter"
+          :host "openrouter.ai"
+          :endpoint "/api/v1/chat/completions"
+          :stream t
+          :key (lambda () (password-store-get "OpenRouterApiKey"))
+          :models '(anthropic/claude-sonnet-4.5
+                    openai/gpt-5
+                    google/gemini-2.5-pro-preview)))
+  (setq gptel-default-mode 'org-mode)
+  (setq gptel-model "anthropic/claude-sonnet-4.5")
+  (setq gptel-confirm-tool-calls t
+        gptel-include-tool-results t))
+
+(use-package! gptel-integrations
+  :after gptel
+  :config
+  (setq mcp-hub-servers nil)
+  (let ((path (expand-file-name "mcp/web-search/build/index.js" doom-user-dir)))
+    (setq mcp-hub-servers
+          `(("filesystem" . (:command "npx" :args ("-y" "@modelcontextprotocol/server-filesystem" "~/dev")))
+            ("fetch" . (:command "npx" :args ("mcp-fetch-server")))))))
+#+end_src
+
+
+** MCP
+
+MCP is a protocol that enables AI assistants to securely interact with external tools and data sources through standardized servers. Think of MCP servers as plugins that extend the AI's capabilities beyond its built-in knowledge.
+
+*** How it works
+- Each MCP server exposes specific tools (functions the AI can call)
+- The AI discovers available tools and invokes them during conversations
+- Servers run as separate processes and communicate via stdio
+- Results are returned to the AI and incorporated into responses
+
+*** Configured servers
+
+**** Filesystem Server
+Allows the AI to read/list files in the =~/dev= directory
+- Tools: read_file, list_directory, search_files
+
+**** Fetch Server
+Enables the AI to make HTTP requests and fetch web content
+- Tools: fetch (GET/POST requests)
+
+#+begin_src sh :tangle no
+npm i mcp-fetch-server
 #+end_src
