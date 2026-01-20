@@ -43,11 +43,12 @@
 (add-hook! (prog-mode text-mode conf-mode special-mode feature-mode) #'hl-line-mode)
 #+end_src
 * Fonts
+*Code*
 + Cascadia Code
 + Hack
 + Fira Code
 + Jetbrains Mono
-+ Overpass
++ Overpass Mono
 + IBM Plex Mono
 + Source Code Pro
 + Monaspace Argon
@@ -55,16 +56,19 @@
 + Monaspace Neon
 + Monaspace Radon
 + Monaspace Xenon
-+ bedstead
 + Monofoki
 + Ubuntu Mono
++ SF Mono
+*Variable*
++ Mona Sans
++ Hubot Sans
 
 
 #+name: main-font
-: Ubuntu Mono
+: Monaspace Neon
 
 #+name: variable-font
-: Source Code Pro
+: Mona Sans
 
 #+begin_src emacs-lisp :var main-font=main-font variable-font=variable-font :results none
 (setq +troy/mono-fonts '("Cascadia Code"
@@ -77,10 +81,11 @@
                          "Monaspace Neon"
                          "Monaspace Radon"
                          "Monaspace Xenon"
-                         "bedstead"
                          "Monofoki"
-                         "Ubuntu Mono"))
-(setq +troy/variable-fonts '("Overpass" "Source Code Pro"))
+                         "Ubuntu Mono"
+                         "SF Mono"
+                         "Overpass Mono"))
+(setq +troy/variable-fonts '("Source Code Pro" "Mona Sans" "Hubot Sans"))
 (setq +troy/font-types '("Code" "Variable"))
 
 (defun +troy/read-font (fonts)
