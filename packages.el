@@ -109,3 +109,8 @@
 
 ;; extra themems
 (package! ef-themes)
+
+(unpin! lsp-mode)
+(package! lsp-mode)
+
+(package! claude-code)
