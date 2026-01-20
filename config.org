@@ -483,12 +483,16 @@ See [[https://emacs.stackexchange.com/questions/79285/why-is-org-highlight-latex
 (map! :map vertico-map "C-l" #'+vertico/enter-or-preview) ;; allow C-l to select an item
 #+end_src
 * Blog
-*NOTE* you need to copy the font awesome directory yourself. This saves a lot of time when exporting static assets.
+*NOTE* you need to copy the font awesome directory from =content= to =public= yourself. This saves a lot of time when exporting static assets.
 #+begin_src emacs-lisp
 (setq org-html-postamble-format
       '(("en" "<p class=\"author\">Author: %a</p><p class=\"date\">Updated: %C</p>")))
 (setq org-html-postamble t)
 (setq org-html-head-include-default-style nil)
+(defun +troy/compile-scss (project-plist)
+  "Compile SCSS files for the blog theme."
+  (shell-command "cd ~/blog/content/themes/theme && ./build.sh"))
+
 (setq org-publish-project-alist
       '(
         ("blog-html"
@@ -507,11 +511,13 @@ See [[https://emacs.stackexchange.com/questions/79285/why-is-org-highlight-latex
          :base-extension "css\\|js\\|png\\|jpg\\|jpeg\\|gif\\|pdf\\|mp3\\|ogg\\|swf\\|ico"
          :publishing-directory "~/blog/public/"
          :publishing-function org-publish-attachment
+         :exclude "themes/resources/resume"
+         :preparation-function +troy/compile-scss
          )
         ("blog" :components ("blog-html" "blog-static"))))
 (defun +troy/publish-blog-remote ()
   (interactive)
-  (async-shell-command "rsync -L -e ssh -uvrz ~/blog/public/ root@165.227.115.74:/var/www/html/ --delete --chmod=Du=rwx,Dgo=rx,Fu=rw,Fog=r"))
+  (async-shell-command "rsync -L -e ssh -uvrz ~/blog/public/ root@troyfischer.net:/var/www/html/ --delete --chmod=Du=rwx,Dgo=rx,Fu=rw,Fog=r"))
 #+end_src
 ** Note on table of contents
 #+begin_quote
