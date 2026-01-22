@@ -612,45 +612,62 @@ npm i mcp-fetch-server
 * Blog Publishing
 *NOTE* you need to copy the font awesome directory from =content= to =public= yourself. This saves a lot of time when exporting static assets.
 #+begin_src emacs-lisp
+;; Blog paths
+(defvar +troy/blog-root (expand-file-name "~/blog")
+  "Root directory of the blog.")
+(defvar +troy/blog-content-dir (expand-file-name "content" +troy/blog-root)
+  "Blog content directory (org files).")
+(defvar +troy/blog-public-dir (expand-file-name "public" +troy/blog-root)
+  "Blog publishing directory (generated HTML).")
+(defvar +troy/blog-theme-dir (expand-file-name "themes/theme" +troy/blog-content-dir)
+  "Blog theme directory.")
+(defvar +troy/blog-remote-path "root@troyfischer.net:/var/www/html/"
+  "Remote path for blog deployment.")
+
+;; HTML export settings
 (setq org-html-postamble-format
       '(("en" "<p class=\"author\">%a</p><p class=\"date\">%C</p>")))
 (setq org-html-postamble t)
 (setq org-html-head-include-default-style nil)
+
 (defun +troy/compile-scss (project-plist)
   "Compile SCSS files for the blog theme."
-  (shell-command "cd ~/blog/content/themes/theme && ./build.sh"))
+  (shell-command (format "cd %s && ./build.sh" +troy/blog-theme-dir)))
 
 (setq org-publish-project-alist
-      '(
-        ("blog-html"
+      `(("blog-html"
          :recursive t
          :base-extension "org"
-         :base-directory "~/blog/content"
-         :publishing-directory "~/blog/public"
+         :base-directory ,+troy/blog-content-dir
+         :publishing-directory ,+troy/blog-public-dir
          :publishing-function org-html-publish-to-html
          :section-numbers nil
          :org-html-link-home "/index.html"
-         :org-html-link-use-abs-url t
-         )
+         :org-html-link-use-abs-url t)
         ("blog-static"
          :recursive t
-         :base-directory "~/blog/content/"
+         :base-directory ,+troy/blog-content-dir
          :base-extension "webp\\|css\\|js\\|png\\|jpg\\|jpeg\\|gif\\|pdf\\|mp3\\|ogg\\|swf\\|ico"
-         :publishing-directory "~/blog/public/"
+         :publishing-directory ,+troy/blog-public-dir
          :publishing-function org-publish-attachment
          :exclude "themes/resources/resume"
-         :preparation-function +troy/compile-scss
-         )
+         :preparation-function +troy/compile-scss)
         ("blog" :components ("blog-html" "blog-static"))))
+
 (defun +troy/publish-blog-remote ()
+  "Publish blog to remote server via rsync."
   (interactive)
-  (async-shell-command "rsync -L -e ssh -uvrz ~/blog/public/ root@troyfischer.net:/var/www/html/ --delete --exclude='.*' --chmod=Du=rwx,Dgo=rx,Fu=rw,Fog=r"))
+  (async-shell-command
+   (format "rsync -L -e ssh -uvrz %s/ %s --delete --exclude='.*' --chmod=Du=rwx,Dgo=rx,Fu=rw,Fog=r"
+           +troy/blog-public-dir
+           +troy/blog-remote-path)))
 
 (defun +troy/force-publish-all-blog-files-local ()
   "Force republish the blog (useful when included files change)."
   (interactive)
   (org-publish "blog" t))
 #+end_src
+
 ** Note on table of contents
 #+begin_quote
 Org normally inserts the table of contents directly before the first headline of the file. To move the table of contents to a different location, first turn off the default with org-export-with-toc variable or with '#+OPTIONS: toc:nil'. Then insert '#+TOC: headlines N' at the desired location(s).
