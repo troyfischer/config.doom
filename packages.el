@@ -56,9 +56,6 @@
 ;; ripgrep
 (package! rg)
 
-;; for use with the python jedi-language-server
-(package! lsp-jedi)
-
 ;; sqlformat
 (package! sqlformat)
 
@@ -88,8 +85,6 @@
 ;;(package! org-drill)
 
 (package! leetcode)
-
-(package! counsel)
 
 (package! clang-format)
 
