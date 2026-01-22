@@ -114,3 +114,7 @@
 (package! lsp-mode)
 
 (package! claude-code)
+
+;; bitwarden integration
+(package! bitwarden
+  :recipe (:host github :repo "troyfischer/emacs-bitwarden"))

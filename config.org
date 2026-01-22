@@ -450,23 +450,37 @@ See [[https://emacs.stackexchange.com/questions/79285/why-is-org-highlight-latex
   (setq-local buffer-file-name (->> babel-info caddr (alist-get :tangle)))
   (lsp))
 #+end_src
-* Password Store Keybindings
+* Bitwarden
 #+begin_src emacs-lisp
-(defun +troy/password-store-dir ()
-  (find-file "~/.password-store"))
-(defun +troy/git-password-store ()
-  (interactive)
-  (+troy/password-store-dir)
-  (magit))
-(use-package! password-store
+(use-package! bitwarden
   :config
+  (setq bitwarden-bw-executable (executable-find "bw")
+        bitwarden-user "troytfischer@gmail.com"
+        bitwarden-automatic-unlock (lambda ()
+                                     (let* ((auth-sources '("~/.authinfo.gpg"))
+                                            (matches (auth-source-search :user "bitwarden"
+                                                                         :host "pass.troyfischer.net"
+                                                                         :require '(:secret)
+                                                                         :max 1))
+                                            (entry (nth 0 matches))
+                                            (secret (plist-get entry :secret)))
+                                       (if (functionp secret)
+                                           (funcall secret)
+                                         secret))))
+  ;; Enable bitwarden as an auth-source backend (similar to pass +auth)
+  (bitwarden-auth-source-enable)
+
   (map! :leader
         (:prefix-map ("P" . "Passwords")
-         :desc "password-store-copy" "c" #'password-store-copy
-         :desc "password-store-otp-token-copy" "o" #'password-store-otp-token-copy
-         :desc "password-store-git" "g" #'+troy/git-password-store
-         :desc "password-store" "p" #'pass)))
+         :desc "bitwarden-unlock" "u" #'bitwarden-unlock
+         :desc "bitwarden-lock" "L" #'bitwarden-lock
+         :desc "bitwarden-list-all" "l" #'bitwarden-list-all
+         :desc "bitwarden-getpass" "c" #'bitwarden-getpass
+         :desc "bitwarden-get-otp" "o" #'bitwarden-get-otp
+         :desc "bitwarden-sync" "s" #'bitwarden-sync
+         :desc "bitwarden-refresh-account-names" "r" #'bitwarden-refresh-account-names)))
 #+end_src
+
 * Projectile
 #+begin_src emacs-lisp
 (use-package! projectile
