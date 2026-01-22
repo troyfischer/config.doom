@@ -147,8 +147,6 @@
     :config
     (map! :leader :desc "ace window" "w C-w" #'ace-window)))
 #+end_src
-** TODO Drag Stuff
-~drag-stuff-up~ & ~drag-stuff-down~ could be useful.
 * Editor Behavior
 ** Evil
 #+begin_src emacs-lisp
