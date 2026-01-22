@@ -486,7 +486,7 @@ See [[https://emacs.stackexchange.com/questions/79285/why-is-org-highlight-latex
 *NOTE* you need to copy the font awesome directory from =content= to =public= yourself. This saves a lot of time when exporting static assets.
 #+begin_src emacs-lisp
 (setq org-html-postamble-format
-      '(("en" "<p class=\"author\">Author: %a</p><p class=\"date\">Updated: %C</p>")))
+      '(("en" "<p class=\"author\">%a</p><p class=\"date\">%C</p>")))
 (setq org-html-postamble t)
 (setq org-html-head-include-default-style nil)
 (defun +troy/compile-scss (project-plist)
@@ -508,7 +508,7 @@ See [[https://emacs.stackexchange.com/questions/79285/why-is-org-highlight-latex
         ("blog-static"
          :recursive t
          :base-directory "~/blog/content/"
-         :base-extension "css\\|js\\|png\\|jpg\\|jpeg\\|gif\\|pdf\\|mp3\\|ogg\\|swf\\|ico"
+         :base-extension "webp\\|css\\|js\\|png\\|jpg\\|jpeg\\|gif\\|pdf\\|mp3\\|ogg\\|swf\\|ico"
          :publishing-directory "~/blog/public/"
          :publishing-function org-publish-attachment
          :exclude "themes/resources/resume"
@@ -517,7 +517,12 @@ See [[https://emacs.stackexchange.com/questions/79285/why-is-org-highlight-latex
         ("blog" :components ("blog-html" "blog-static"))))
 (defun +troy/publish-blog-remote ()
   (interactive)
-  (async-shell-command "rsync -L -e ssh -uvrz ~/blog/public/ root@troyfischer.net:/var/www/html/ --delete --chmod=Du=rwx,Dgo=rx,Fu=rw,Fog=r"))
+  (async-shell-command "rsync -L -e ssh -uvrz ~/blog/public/ root@troyfischer.net:/var/www/html/ --delete --exclude='.*' --chmod=Du=rwx,Dgo=rx,Fu=rw,Fog=r"))
+
+(defun +troy/force-publish-all-blog-files-local ()
+  "Force republish the blog (useful when included files change)."
+  (interactive)
+  (org-publish "blog" t))
 #+end_src
 ** Note on table of contents
 #+begin_quote
