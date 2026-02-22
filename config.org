@@ -147,6 +147,14 @@
     :config
     (map! :leader :desc "ace window" "w C-w" #'ace-window)))
 #+end_src
+** Swiper
+Preferable to both doom emac's ~(+default/search-buffer)~ and ~isearch~.
+#+begin_src emacs-lisp
+(use-package! swiper
+  :config
+  (map! "C-s" #'swiper-isearch
+        "C-S-s" #'swiper-isearch-backward))
+#+end_src
 * Editor Behavior
 ** Evil
 #+begin_src emacs-lisp
