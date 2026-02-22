@@ -95,6 +95,8 @@
        ;;gist              ; interacting with github gists
        (lookup             ; navigate your code and its documentation
         +dictionary)
+       llm               ; when I said you needed friends, I didn't mean...
+
 
        lsp                 ; M-x vscode
        (magit +forge)               ; a git porcelain for Emacs

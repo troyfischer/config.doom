@@ -545,11 +545,12 @@ Config: [[https://github.com/wandersoncferreira/code-review]]
           :endpoint "/api/v1/chat/completions"
           :stream t
           :key (lambda () (password-store-get "OpenRouterApiKey"))
-          :models '(anthropic/claude-sonnet-4.5
-                    openai/gpt-5
-                    google/gemini-3-pro-preview)))
-  ;; (setq gptel-default-mode 'org-mode)
-  (setq gptel-model "google/gemini-3-pro-preview")
+          :models '(anthropic/claude-sonnet-4.6
+                    anthropic/claude-opus-4.6
+                    openai/gpt-5.2
+                    google/gemini-3.1-pro-preview)))
+  (setq gptel-default-mode 'org-mode)
+  (setq gptel-model 'google/gemini-3.1-pro-preview)
   (setq gptel-confirm-tool-calls t
         gptel-include-tool-results t))
 

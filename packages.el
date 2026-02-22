@@ -99,8 +99,7 @@
   :recipe (:host github :repo "titaniumbones/ox-slack"))
 
 ;; llm packages
-(package! gptel)
-(package! mcp)
+;; (package! mcp)
 
 ;; extra themems
 (package! ef-themes)
