@@ -100,8 +100,12 @@
 
 ;; llm packages
 ;; (package! mcp)
+(package! agent-shell)
 
-;; extra themems
+;; illuminate position of cursor
+(package! pulsar)
+
+;; extra themes
 (package! ef-themes)
 
 (unpin! lsp-mode)

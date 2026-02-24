@@ -132,6 +132,7 @@
 #+begin_src emacs-lisp
 (use-package! avy
   :config
+  (map! :leader "s c" #'avy-goto-char-timer)
   (setq avy-all-windows t))
 #+end_src
 ** Ace Window
@@ -152,8 +153,18 @@ Preferable to both doom emac's ~(+default/search-buffer)~ and ~isearch~.
 #+begin_src emacs-lisp
 (use-package! swiper
   :config
+  (map! :leader "s s" #'swiper-isearch)
   (map! "C-s" #'swiper-isearch
         "C-S-s" #'swiper-isearch-backward))
+#+end_src
+** Pulsar
+
+#+begin_src emacs-lisp
+(use-package! pulsar
+  :config
+  (setq pulsar-pulse-on-window-change t)
+  (add-to-list 'pulsar-pulse-functions 'ace-window)
+  (pulsar-global-mode 1))
 #+end_src
 * Editor Behavior
 ** Evil
@@ -534,7 +545,8 @@ Config: [[https://github.com/wandersoncferreira/code-review]]
   (add-hook 'leetcode-solution-mode-hook
           (lambda() (flycheck-mode -1))))
 #+end_src
-** Gptel
+** LLM
+*** Gptel
 #+begin_src emacs-lisp
 (use-package! gptel
   :config
@@ -565,33 +577,45 @@ Config: [[https://github.com/wandersoncferreira/code-review]]
 #+end_src
 
 
-*** MCP
+**** MCP
 
 MCP is a protocol that enables AI assistants to securely interact with external tools and data sources through standardized servers. Think of MCP servers as plugins that extend the AI's capabilities beyond its built-in knowledge.
 
-**** How it works
+***** How it works
 - Each MCP server exposes specific tools (functions the AI can call)
 - The AI discovers available tools and invokes them during conversations
 - Servers run as separate processes and communicate via stdio
 - Results are returned to the AI and incorporated into responses
 
-**** Configured servers
+***** Configured servers
 
-***** Filesystem Server
+****** Filesystem Server
 Allows the AI to read/list files in the =~/dev= directory
 - Tools: read_file, list_directory, search_files
 
-***** Fetch Server
+****** Fetch Server
 Enables the AI to make HTTP requests and fetch web content
 - Tools: fetch (GET/POST requests)
 
 #+begin_src sh :tangle no
 npm i mcp-fetch-server
 #+end_src
-** Claude Code
+*** Agent Shell
+
+#+begin_src emacs-lisp
+(use-package! agent-shell
+  :config
+  (setq agent-shell-anthropic-claude-environment
+      (agent-shell-make-environment-variables
+       "ANTHROPIC_BASE_URL" "https://openrouter.ai/api"
+       "ANTHROPIC_AUTH_TOKEN" (password-store-get "OpenRouterApiKey")
+       "ANTHROPIC_API_KEY" "")))
+#+end_src
+*** Claude Code
 
 #+begin_src emacs-lisp
 (use-package! claude-code
+  :after password-store
   :config
   (setq claude-code-terminal-backend 'vterm)
   ; using openrouter for claude sonnet model
