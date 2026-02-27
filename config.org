@@ -151,6 +151,13 @@
 ** Swiper
 Preferable to both doom emac's ~(+default/search-buffer)~ and ~isearch~.
 #+begin_src emacs-lisp
+(use-package! ivy
+  :config
+  (when (modulep! :editor evil)
+    (map! :map ivy-minibuffer-map
+          "C-j" #'ivy-next-line
+          "C-k" #'ivy-previous-line)))
+
 (use-package! swiper
   :config
   (map! :leader "s s" #'swiper-isearch)
