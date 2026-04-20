@@ -54,16 +54,16 @@
 + Monofoki
 + Ubuntu Mono
 + SF Mono
++ Paper Mono
 *Variable*
 + Mona Sans
 + Hubot Sans
 
-
 #+name: main-font
-: Monaspace Neon
+: Overpass Mono
 
 #+name: variable-font
-: Mona Sans
+: Crimson Pro
 
 #+begin_src emacs-lisp :var main-font=main-font variable-font=variable-font :results none
 (setq +troy/mono-fonts '("Cascadia Code"
@@ -78,9 +78,20 @@
                          "Monaspace Xenon"
                          "Monofoki"
                          "Ubuntu Mono"
+                         "Fantasque Sans Mono"
                          "SF Mono"
-                         "Overpass Mono"))
-(setq +troy/variable-fonts '("Source Code Pro" "Mona Sans" "Hubot Sans"))
+                         "Overpass Mono"
+                         "Source Code Pro"
+                         "Paper Mono"))
+
+(setq +troy/variable-fonts '("Merriweather"
+                             "Inter"
+                             "Mona Sans"
+                             "Source Sans 3"
+                             "IBM Plex Sans"
+                             "Crimson Pro"
+                             "Hubot Sans"))
+
 (setq +troy/font-types '("Code" "Variable"))
 
 (defun +troy/read-font (fonts)
@@ -94,7 +105,11 @@
     (let ((font (+troy/read-font (if (string= face "Code") +troy/mono-fonts +troy/variable-fonts))))
       (if (string= face "Code") (+troy/set-mono-font font) (+troy/set-variable-font font))
       (message "%s font set to %s" face font)))
-  (doom/reload-font))
+  (doom/reload-font)
+  ;; Restart mixed-pitch-mode if it is active (used by Zen/Writeroom) to rebuild face remaps
+  (when (bound-and-true-p mixed-pitch-mode)
+    (mixed-pitch-mode -1)
+    (mixed-pitch-mode 1)))
 
 (defun +troy/set-mono-font (f)
   (setq doom-font (font-spec :family f :size 15)
