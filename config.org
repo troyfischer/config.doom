@@ -517,7 +517,8 @@ See [[https://emacs.stackexchange.com/questions/79285/why-is-org-highlight-latex
 #+end_src
 ** Auth Sources
 #+begin_src emacs-lisp
-(setq auth-sources '("~/.authinfo.gpg"))
+(after! auth-source
+  (add-to-list 'auth-sources "~/.authinfo.gpg"))
 #+end_src
 ** Projectile
 #+begin_src emacs-lisp
