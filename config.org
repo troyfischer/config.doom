@@ -654,6 +654,12 @@ npm i mcp-fetch-server
   (setenv "ANTHROPIC_AUTH_TOKEN" (password-store-get "OpenRouterApiKey"))
   (setenv "ANTHROPIC_API_KEY" ""))
 #+end_src
+
+** RSS
+#+begin_src emacs-lisp
+(after! elfeed
+  (setq rmh-elfeed-org-files (list (expand-file-name "elfeed.org" org-directory))))
+#+end_src
 ** Writeroom
 #+begin_src emacs-lisp
 (defadvice! +gptel-keep-header-in-zen-a (orig-fn &rest args)
