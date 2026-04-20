@@ -484,12 +484,6 @@ See [[https://emacs.stackexchange.com/questions/79285/why-is-org-highlight-latex
       (setq org-latex-classes nil)))
   )
 #+end_src
-** Babel
-#+begin_src emacs-lisp
-(defun org-babel-edit-prep:python (babel-info)
-  (setq-local buffer-file-name (->> babel-info caddr (alist-get :tangle)))
-  (lsp))
-#+end_src
 * Tools & Integrations
 ** Bitwarden
 #+begin_src emacs-lisp
