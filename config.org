@@ -623,21 +623,33 @@ npm i mcp-fetch-server
 
 #+begin_src emacs-lisp
 (use-package! agent-shell
+  :defer t
   :config
   (setq agent-shell-anthropic-claude-environment
-      (agent-shell-make-environment-variables
-       "ANTHROPIC_BASE_URL" "https://openrouter.ai/api"
-       "ANTHROPIC_AUTH_TOKEN" (password-store-get "OpenRouterApiKey")
-       "ANTHROPIC_API_KEY" "")))
+        (agent-shell-make-environment-variables
+         "ANTHROPIC_BASE_URL" "https://openrouter.ai/api"
+         "ANTHROPIC_AUTH_TOKEN" (password-store-get "OpenRouterApiKey")
+         "ANTHROPIC_API_KEY" ""))
+  (setq agent-shell-openai-authentication
+        (agent-shell-openai-make-authentication
+         :api-key (lambda () (password-store-get "OpenRouterApiKey"))))
+  (setq agent-shell-openai-codex-environment
+        (agent-shell-make-environment-variables
+         "OPENROUTER_API_KEY" (password-store-get "OpenRouterApiKey")
+         "OPENAI_BASE_URL" "https://openrouter.ai/api"
+         "OPENAI_API_KEY" "")))
 #+end_src
 *** Claude Code
 
 #+begin_src emacs-lisp
 (use-package! claude-code
-  :after password-store
+  :defer t
+  :init
+  (map! "C-c c" #'claude-code-transient)
   :config
-  (setq claude-code-terminal-backend 'vterm)
-  ; using openrouter for claude sonnet model
+  (setq ghostel-module-auto-install 'download
+        claude-code-terminal-backend 'ghostel)
+  ;; using openrouter for claude sonnet model
   (setenv "ANTHROPIC_BASE_URL" "https://openrouter.ai/api")
   (setenv "ANTHROPIC_AUTH_TOKEN" (password-store-get "OpenRouterApiKey"))
   (setenv "ANTHROPIC_API_KEY" ""))
