@@ -654,6 +654,20 @@ npm i mcp-fetch-server
   (setenv "ANTHROPIC_AUTH_TOKEN" (password-store-get "OpenRouterApiKey"))
   (setenv "ANTHROPIC_API_KEY" ""))
 #+end_src
+** Writeroom
+#+begin_src emacs-lisp
+(defadvice! +gptel-keep-header-in-zen-a (orig-fn &rest args)
+  "Cache and restore gptel's header-line when toggling writeroom-mode."
+  :around #'writeroom-mode
+  (let ((cached-header (when (bound-and-true-p gptel-mode) 
+                         header-line-format)))
+    ;; Let Doom's zen/writeroom mode do its standard setup/teardown
+    (apply orig-fn args)
+    
+    ;; If we just turned it ON and we are in gptel, put the header back
+    (when (and writeroom-mode (bound-and-true-p gptel-mode))
+      (setq header-line-format cached-header))))
+#+end_src
 * External Editors
 ** Open PyCharm from current project
 #+begin_src elisp
