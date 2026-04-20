@@ -562,6 +562,77 @@ Config: [[https://github.com/wandersoncferreira/code-review]]
   (add-hook 'leetcode-solution-mode-hook
           (lambda() (flycheck-mode -1))))
 #+end_src
+** Ghostel
+#+begin_src emacs-lisp
+(use-package! ghostel
+  :commands (ghostel-mode)
+  :hook (ghostel-mode . hide-mode-line-mode)
+  :config
+  (set-popup-rule! "^\\*doom:ghostel-popup" :size 0.25 :vslot -4 :select t :quit nil :ttl 0)
+
+  (defvar +ghostel--popup-buffers (make-hash-table :test 'equal))
+
+  (defun +ghostel--popup-key ()
+    (if (bound-and-true-p persp-mode)
+        (safe-persp-name (get-current-persp))
+      "main"))
+
+  (defun +ghostel--popup-buffer-name (key)
+    (format "*doom:ghostel-popup:%s*" key))
+
+  (defun +ghostel--configure-project-root-and-display (arg display-fn)
+    "Set up the project root, then call DISPLAY-FN.
+
+If prefix ARG is non-nil, use `default-directory' instead of the project root."
+    (let* ((project-root (or (doom-project-root) default-directory))
+           (default-directory (if arg default-directory project-root)))
+      (setenv "PROOT" project-root)
+      (funcall display-fn)))
+
+  (defun +ghostel/toggle (arg)
+    "Toggle a Ghostel popup terminal at the project root.
+
+If prefix ARG is non-nil, recreate the terminal in the current directory.
+Returns the Ghostel buffer."
+    (interactive "P")
+    (+ghostel--configure-project-root-and-display
+     arg
+     (lambda ()
+       (let* ((key (+ghostel--popup-key))
+              (buffer-name (+ghostel--popup-buffer-name key))
+              (buffer (gethash key +ghostel--popup-buffers))
+              (window (and (buffer-live-p buffer)
+                           (get-buffer-window buffer t)))
+              confirm-kill-processes)
+         (unless (buffer-live-p buffer)
+           (setq buffer nil)
+           (remhash key +ghostel--popup-buffers))
+         (when arg
+           (when (window-live-p window)
+             (delete-window window))
+           (when (buffer-live-p buffer)
+             (kill-buffer buffer))
+           (remhash key +ghostel--popup-buffers)
+           (setq buffer nil
+                 window nil))
+         (if window
+             (delete-window window)
+           (let ((buffer (or buffer
+                             (get-buffer-create buffer-name))))
+             (puthash key buffer +ghostel--popup-buffers)
+             (with-current-buffer buffer
+               (setq-local ghostel-enable-title-tracking nil)
+               (setq-local ghostel--managed-buffer-name buffer-name)
+               (unless (equal (buffer-name) buffer-name)
+                 (rename-buffer buffer-name t)))
+             (pop-to-buffer buffer)
+             (ghostel--init-buffer buffer)
+             buffer))))))
+
+  ;; hopefully doom just incorporates ghostel but I may come back to this later
+  ;; (map! :leader :desc "Toggle ghostel popup" "o t" #'+ghostel/toggle)
+)
+#+end_src
 ** LLM
 *** Gptel
 #+begin_src emacs-lisp

@@ -111,7 +111,16 @@
 (unpin! lsp-mode)
 (package! lsp-mode)
 
-(package! claude-code)
+(package! claude-code
+  :recipe (:host github
+           :repo "stevemolitor/claude-code.el"
+           :files ("*.el" (:exclude "images/*"))))
+
+;; requires specific zig version to compile
+(package! ghostel
+  :recipe (:host github
+           :repo "dakra/ghostel"
+           :files (:defaults "etc" "terminfo")))
 
 ;; bitwarden integration
 (package! bitwarden
